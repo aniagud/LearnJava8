@@ -1,6 +1,8 @@
 package com.epam.cdp.m2.hw2.aggregator;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import javafx.util.Pair;
 
@@ -8,7 +10,8 @@ public class Java8Aggregator implements Aggregator {
 
     @Override
     public int sum(List<Integer> numbers) {
-        throw new UnsupportedOperationException();
+
+        return numbers.stream().reduce(0,Integer::sum);
     }
 
     @Override
