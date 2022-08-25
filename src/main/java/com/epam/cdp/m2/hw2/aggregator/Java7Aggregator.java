@@ -1,8 +1,8 @@
 package com.epam.cdp.m2.hw2.aggregator;
 
-import java.util.*;
-
 import javafx.util.Pair;
+
+import java.util.*;
 
 public class Java7Aggregator implements Aggregator {
 
@@ -27,11 +27,11 @@ public class Java7Aggregator implements Aggregator {
                 wordsFrequency.put(word, 1L);
             }
         }
-        Map<String, Long> sortedWordsFrequency = sortMap(wordsFrequency);
-        List<Pair<String,Long>> mostFrequentWords = new ArrayList<>();
+        Map<String, Long> sortedWordsFrequency = sortMapByValue(wordsFrequency);
+        List<Pair<String, Long>> mostFrequentWords = new ArrayList<>();
 
         Iterator<Map.Entry<String, Long>> iterator = sortedWordsFrequency.entrySet().iterator();
-        while (iterator.hasNext() && mostFrequentWords.size() < limit){
+        while (iterator.hasNext() && mostFrequentWords.size() < limit) {
             Map.Entry<String, Long> entry = iterator.next();
             mostFrequentWords.add(new Pair<>(entry.getKey(), entry.getValue()));
         }
@@ -40,11 +40,27 @@ public class Java7Aggregator implements Aggregator {
 
     @Override
     public List<String> getDuplicates(List<String> words, long limit) {
-        throw new UnsupportedOperationException();
+
+        Set<String> wordsSet = new HashSet<>();
+        Set<String> duplicates = new TreeSet<>(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int comparedLength = Integer.compare(o1.length(), o2.length());
+                return comparedLength != 0 ? comparedLength : o1.compareTo(o2);
+            }
+        });
+        for (String word : words) {
+            String w = word.toUpperCase();
+            if (duplicates.size() < limit && !wordsSet.add(w)) {
+                duplicates.add(w);
+            }
+        }
+        return new ArrayList<>(duplicates);
     }
 
+
     // to sort a map by Long values descending first and by String keys alphabetically when values are equal
-    private static Map<String, Long> sortMap(Map<String, Long> map) {
+    private static Map<String, Long> sortMapByValue(Map<String, Long> map) {
         List<Map.Entry<String, Long>> list = new ArrayList<>(map.entrySet());
 
         list.sort(new Comparator<Map.Entry<String, Long>>() {

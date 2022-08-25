@@ -1,11 +1,12 @@
 package com.epam.cdp.m2.hw2.aggregator;
 
 import javafx.util.Pair;
-
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 
 public class Java8Aggregator implements Aggregator {
 
@@ -36,6 +37,17 @@ public class Java8Aggregator implements Aggregator {
 
     @Override
     public List<String> getDuplicates(List<String> words, long limit) {
-        throw new UnsupportedOperationException();
+
+        return words.stream()
+                .map(String::toUpperCase)
+                .collect(groupingBy(Function.identity(),counting()))
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() > 1)
+                .sorted(Comparator.comparingInt((Map.Entry<String, Long> o) ->
+                        o.getKey().length()).thenComparing(Map.Entry::getKey))
+                .limit(limit)
+                .map(Map.Entry::getKey)
+                .collect(toList());
     }
 }
