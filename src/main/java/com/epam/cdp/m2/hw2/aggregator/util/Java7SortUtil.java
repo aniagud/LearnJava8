@@ -9,7 +9,7 @@ public class Java7SortUtil {
      * @param map map of strings with long values
      * @return a sorted map
      */
-    public static Map<String, Long> sortMapByValue(Map<String, Long> map) {
+    public static Map<String, Long> sortMapByValueAndKey(Map<String, Long> map) {
         List<Map.Entry<String, Long>> list = new ArrayList<>(map.entrySet());
 
         list.sort(new Comparator<Map.Entry<String, Long>>() {

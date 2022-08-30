@@ -5,7 +5,7 @@ import javafx.util.Pair;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.epam.cdp.m2.hw2.aggregator.util.Java7SortUtil.sortMapByValue;
+import static com.epam.cdp.m2.hw2.aggregator.util.Java7SortUtil.sortMapByValueAndKey;
 
 public class Java7ParallelAggregator implements Aggregator {
 
@@ -87,7 +87,7 @@ public class Java7ParallelAggregator implements Aggregator {
             Future<Map<String,Long>> futureFrequencies = executor.submit(taskFindFrequencies);
 
             try {
-                Map<String, Long> sortedWordsFrequency = sortMapByValue(futureFrequencies.get());
+                Map<String, Long> sortedWordsFrequency = sortMapByValueAndKey(futureFrequencies.get());
 
                 Callable<List<Pair<String,Long>>> taskCreateList = new Callable<List<Pair<String,Long>>>() {
                     @Override

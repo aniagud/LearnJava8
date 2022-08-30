@@ -4,7 +4,7 @@ import javafx.util.Pair;
 
 import java.util.*;
 
-import static com.epam.cdp.m2.hw2.aggregator.util.Java7SortUtil.sortMapByValue;
+import static com.epam.cdp.m2.hw2.aggregator.util.Java7SortUtil.sortMapByValueAndKey;
 
 public class Java7Aggregator implements Aggregator {
 
@@ -29,7 +29,7 @@ public class Java7Aggregator implements Aggregator {
                 wordsFrequency.put(word, 1L);
             }
         }
-        Map<String, Long> sortedWordsFrequency = sortMapByValue(wordsFrequency);
+        Map<String, Long> sortedWordsFrequency = sortMapByValueAndKey(wordsFrequency);
         List<Pair<String, Long>> mostFrequentWords = new ArrayList<>();
 
         Iterator<Map.Entry<String, Long>> iterator = sortedWordsFrequency.entrySet().iterator();
