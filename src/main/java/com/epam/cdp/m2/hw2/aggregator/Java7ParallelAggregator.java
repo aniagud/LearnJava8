@@ -1,13 +1,18 @@
 package com.epam.cdp.m2.hw2.aggregator;
 
+import com.epam.cdp.m2.hw2.aggregator.util.Java7FindFrequencyTask;
+import com.epam.cdp.m2.hw2.aggregator.util.Java7SumTask;
 import javafx.util.Pair;
 
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.epam.cdp.m2.hw2.aggregator.util.Java7SortUtil.getListFromMap;
 import static com.epam.cdp.m2.hw2.aggregator.util.Java7SortUtil.sortMapByValueAndKey;
 
 public class Java7ParallelAggregator implements Aggregator {
+
+    private ExecutorService executor = Executors.newFixedThreadPool(2);
 
     @Override
     public int sum(List<Integer> numbers) {
@@ -26,99 +31,59 @@ public class Java7ParallelAggregator implements Aggregator {
                     numbers2.add(numbers.get(i));
                 }
             }
-            Callable<Integer> task1 = new Callable<Integer>() {
-                @Override
-                public Integer call() {
-                    return executeSum(numbers1);
-                }
-            };
 
-            Callable<Integer> task2 = new Callable<Integer>() {
-                @Override
-                public Integer call() {
-                    return executeSum(numbers2);
-                }
-            };
-
-            ExecutorService executor = Executors.newFixedThreadPool(2);
-            Future<Integer> future1 = executor.submit(task1);
-            Future<Integer> future2 = executor.submit(task2);
+            Future<Integer> future1 = executor.submit(new Java7SumTask(numbers1));
+            Future<Integer> future2 = executor.submit(new Java7SumTask(numbers2));
 
             try {
                 return future1.get() + future2.get();
             } catch (Exception e) {
                 throw new RuntimeException(e);
-            } finally {
-                executor.shutdown();
             }
         }
     }
 
-    private int executeSum(List<Integer> numbers) {
-        int sum = 0;
-        for (int number : numbers) {
-            sum += number;
-        }
-        return sum;
-    }
 
     @Override
     public List<Pair<String, Long>> getMostFrequentWords(List<String> words, long limit) {
 
-        if (words == null || words.isEmpty()){
+        if (words == null || words.isEmpty()) {
             return new ArrayList<>();
         } else {
 
-            Callable<Map<String,Long>> taskFindFrequencies = new Callable<Map<String,Long>>() {
-                @Override
-                public Map<String,Long> call() {
-                    Map<String, Long> wordsFrequency = new HashMap<>();
-                    for (String word : words) {
-                        if (wordsFrequency.containsKey(word)) {
-                            wordsFrequency.replace(word, wordsFrequency.get(word) + 1);
-                        } else {
-                            wordsFrequency.put(word, 1L);
-                        }
-                    }
-                    return wordsFrequency;
-                }
-            };
-            ExecutorService executor = Executors.newFixedThreadPool(2);
-            Future<Map<String,Long>> futureFrequencies = executor.submit(taskFindFrequencies);
+            int subsetsNr = 5;
+            List<List<String>> wordsSublists = divideStringList(words, subsetsNr);
 
-            try {
-                Map<String, Long> sortedWordsFrequency = sortMapByValueAndKey(futureFrequencies.get());
-
-                Callable<List<Pair<String,Long>>> taskCreateList = new Callable<List<Pair<String,Long>>>() {
-                    @Override
-                    public List<Pair<String,Long>> call() {
-
-                        List<Pair<String, Long>> mostFrequentWords = new ArrayList<>();
-
-                        Iterator<Map.Entry<String, Long>> iterator = sortedWordsFrequency.entrySet().iterator();
-                        while (iterator.hasNext() && mostFrequentWords.size() < limit) {
-                            Map.Entry<String, Long> entry = iterator.next();
-                            mostFrequentWords.add(new Pair<>(entry.getKey(), entry.getValue()));
-                        }
-                        return mostFrequentWords;
-                    }
-                };
-                Future<List<Pair<String,Long>>>  futureList = executor.submit(taskCreateList);
-
-                return futureList.get();
-
-            } catch (Exception e){
-                throw new RuntimeException(e);
-            }finally {
-                executor.shutdown();
+            List<Future<Map<String,Long>>> futureFrequencies = new ArrayList<>();
+            for (List<String> wordSublist: wordsSublists) {
+                futureFrequencies.add(executor.submit(new Java7FindFrequencyTask(wordSublist)));
             }
+
+            Map<String,Long> mergedFrequenciesMap = new HashMap<>();
+            for (Future<Map<String,Long>> future: futureFrequencies) {
+                try {
+                    Map<String,Long> map = future.get();
+                    for (Map.Entry<String,Long> entry : map.entrySet()){
+                        if (mergedFrequenciesMap.containsKey(entry.getKey())){
+                            mergedFrequenciesMap.replace(entry.getKey(),
+                                    mergedFrequenciesMap.get(entry.getKey()) + entry.getValue());
+                        } else {
+                            mergedFrequenciesMap.put(entry.getKey(), entry.getValue());
+                        }
+                    }
+                } catch (ExecutionException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            Map<String, Long> sortedWordsFrequency = sortMapByValueAndKey(mergedFrequenciesMap);
+            return getListFromMap(sortedWordsFrequency, limit);
         }
     }
 
     @Override
     public List<String> getDuplicates(List<String> words, long limit) {
 
-        if (words == null || words.isEmpty()){
+        if (words == null || words.isEmpty()) {
             return new ArrayList<>();
         } else {
 
@@ -143,17 +108,29 @@ public class Java7ParallelAggregator implements Aggregator {
                     return duplicates;
                 }
             };
-            ExecutorService executor = Executors.newFixedThreadPool(2);
             Future<Set<String>> futureDuplicates = executor.submit(taskFindDuplicates);
 
             try {
                 return new ArrayList<>(futureDuplicates.get());
-            } catch (Exception e){
+            } catch (Exception e) {
                 throw new RuntimeException(e);
-            } finally {
-                executor.shutdown();
             }
         }
+    }
+
+    private List<List<String>> divideStringList(List<String> words, int subsetsNr){
+        int counter = 0;
+        List<List<String>> wordsSublists = new ArrayList<>();
+        for (int i = 0; i < subsetsNr; i++)  {
+            wordsSublists.add(new ArrayList<>());
+        }
+        for (String word : words) {
+            wordsSublists.get(counter).add(word);
+            if (++counter == subsetsNr){
+                counter = 0;
+            }
+        }
+        return wordsSublists;
     }
 
 }

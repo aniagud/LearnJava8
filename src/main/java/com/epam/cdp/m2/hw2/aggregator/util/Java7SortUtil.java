@@ -1,5 +1,7 @@
 package com.epam.cdp.m2.hw2.aggregator.util;
 
+import javafx.util.Pair;
+
 import java.util.*;
 
 public class Java7SortUtil {
@@ -27,5 +29,17 @@ public class Java7SortUtil {
         }
 
         return sortedMap;
+    }
+
+    public static List<Pair<String, Long>> getListFromMap(Map<String, Long> map, long limit){
+
+        List<Pair<String, Long>> pairList = new ArrayList<>();
+
+        Iterator<Map.Entry<String, Long>> iterator = map.entrySet().iterator();
+        while (iterator.hasNext() && pairList.size() < limit) {
+            Map.Entry<String, Long> entry = iterator.next();
+            pairList.add(new Pair<>(entry.getKey(), entry.getValue()));
+        }
+        return pairList;
     }
 }
