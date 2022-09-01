@@ -38,7 +38,7 @@ public class Java7ParallelAggregator implements Aggregator {
 
             try {
                 return future1.get() + future2.get();
-            } catch (Exception e) {
+            } catch (ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -90,7 +90,7 @@ public class Java7ParallelAggregator implements Aggregator {
 
             try {
                 return new ArrayList<>(futureDuplicates.get());
-            } catch (Exception e) {
+            } catch (ExecutionException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
