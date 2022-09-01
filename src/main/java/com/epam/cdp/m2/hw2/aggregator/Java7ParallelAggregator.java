@@ -1,5 +1,6 @@
 package com.epam.cdp.m2.hw2.aggregator;
 
+import com.epam.cdp.m2.hw2.aggregator.util.Java7FindDuplicatesTask;
 import com.epam.cdp.m2.hw2.aggregator.util.Java7FindFrequencyTask;
 import com.epam.cdp.m2.hw2.aggregator.util.Java7SumTask;
 import javafx.util.Pair;
@@ -50,7 +51,6 @@ public class Java7ParallelAggregator implements Aggregator {
         if (words == null || words.isEmpty()) {
             return new ArrayList<>();
         } else {
-
             int subsetsNr = 5;
             List<List<String>> wordsSublists = divideStringList(words, subsetsNr);
 
@@ -86,29 +86,7 @@ public class Java7ParallelAggregator implements Aggregator {
         if (words == null || words.isEmpty()) {
             return new ArrayList<>();
         } else {
-
-            Callable<Set<String>> taskFindDuplicates = new Callable<Set<String>>() {
-                @Override
-                public Set<String> call() {
-
-                    Set<String> wordsSet = new HashSet<>();
-                    Set<String> duplicates = new TreeSet<>(new Comparator<String>() {
-                        @Override
-                        public int compare(String o1, String o2) {
-                            int comparedLength = Integer.compare(o1.length(), o2.length());
-                            return comparedLength != 0 ? comparedLength : o1.compareTo(o2);
-                        }
-                    });
-                    for (String word : words) {
-                        String w = word.toUpperCase();
-                        if (duplicates.size() < limit && !wordsSet.add(w)) {
-                            duplicates.add(w);
-                        }
-                    }
-                    return duplicates;
-                }
-            };
-            Future<Set<String>> futureDuplicates = executor.submit(taskFindDuplicates);
+            Future<Set<String>> futureDuplicates = executor.submit(new Java7FindDuplicatesTask(words, limit));
 
             try {
                 return new ArrayList<>(futureDuplicates.get());
